@@ -7,9 +7,12 @@ from pathlib import Path
 
 # 项目根目录（支持 GitHub Actions 的嵌套目录）
 PROJECT_ROOT = Path(__file__).parent.resolve()
-# 如果在 GitHub Actions 中，尝试向上查找项目根目录
-if not (PROJECT_ROOT / "config.yaml").exists():
-    PROJECT_ROOT = Path(__file__).parent.parent.resolve()
+
+# 迭代向上查找包含 config.yaml 的目录
+for _ in range(3):  # 最多向上找3层
+    if (PROJECT_ROOT / "config.yaml").exists():
+        break
+    PROJECT_ROOT = PROJECT_ROOT.parent
 
 CONFIG_FILE = PROJECT_ROOT / "config.yaml"
 DATA_FILE = PROJECT_ROOT / "data" / "data.json"
