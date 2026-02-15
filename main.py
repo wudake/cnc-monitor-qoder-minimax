@@ -8,7 +8,7 @@ import sys
 import time
 from datetime import datetime
 
-from config import TARGETS, config, LOG_FILE
+from config import TARGETS, config
 from utils.parser import site_monitor
 from utils.storage import storage
 from utils.notifier import notifier
