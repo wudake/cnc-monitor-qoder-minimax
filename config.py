@@ -6,13 +6,16 @@ import yaml
 from pathlib import Path
 
 # 项目根目录（支持 GitHub Actions 的嵌套目录）
-PROJECT_ROOT = Path(__file__).parent.resolve()
+import os
 
-# 迭代向上查找包含 config.yaml 的目录
-for _ in range(3):  # 最多向上找3层
-    if (PROJECT_ROOT / "config.yaml").exists():
+# 从当前工作目录向上查找
+cwd = Path(os.getcwd()).resolve()
+for p in [cwd, cwd.parent, cwd.parent.parent]:
+    if (p / "config.yaml").exists():
+        PROJECT_ROOT = p
         break
-    PROJECT_ROOT = PROJECT_ROOT.parent
+else:
+    PROJECT_ROOT = Path(__file__).parent.resolve()
 
 CONFIG_FILE = PROJECT_ROOT / "config.yaml"
 DATA_FILE = PROJECT_ROOT / "data" / "data.json"
