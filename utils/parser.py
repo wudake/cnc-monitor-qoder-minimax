@@ -28,7 +28,6 @@ class SeleniumHelper:
                 from selenium import webdriver
                 from selenium.webdriver.chrome.service import Service
                 from selenium.webdriver.chrome.options import Options
-                from webdriver_manager.chrome import ChromeDriverManager
 
                 chrome_options = Options()
                 chrome_options.add_argument("--headless")
@@ -38,8 +37,16 @@ class SeleniumHelper:
                 chrome_options.add_argument("--window-size=1920,1080")
                 chrome_options.add_argument("--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
 
-                service = Service(ChromeDriverManager().install())
-                cls._driver = webdriver.Chrome(service=service, options=chrome_options)
+                # 优先使用系统自带的 chromedriver（GitHub Actions 环境）
+                try:
+                    service = Service("/usr/bin/chromedriver")
+                    cls._driver = webdriver.Chrome(service=service, options=chrome_options)
+                except Exception:
+                    # 回退到 webdriver_manager（本地 Windows 环境）
+                    from webdriver_manager.chrome import ChromeDriverManager
+                    service = Service(ChromeDriverManager().install())
+                    cls._driver = webdriver.Chrome(service=service, options=chrome_options)
+
                 logger.info("Selenium WebDriver 初始化成功")
             except Exception as e:
                 logger.error(f"Selenium 初始化失败: {e}")
