@@ -1,0 +1,31 @@
+# 敏感配置文件
+# 请填入您的实际配置信息
+
+telegram:
+  bot_token: "8274840461:AAEFC50EYJIXHjdE7CMNXr-JL5a-eAI0heU"
+  chat_id: "5662025952"
+
+email:
+  smtp_host: "smtp.qq.com"
+  smtp_port: 465
+  username: "736593771@qq.com"
+  password: "fiuwkynuonmibaid"
+  use_tls: false
+  use_ssl: true
+  from_email: "736593771@qq.com"
+  to_emails:
+    - "wudake264@gmail.com"
+
+# 关键词配置（不区分大小写）
+keywords:
+  - "CNC"
+  - "machining"
+
+# 任务配置
+task:
+  run_time: "08:00"
+  retry_count: 3
+  retry_delay: 600  # 10分钟
+  request_timeout: 30
+  min_delay: 2  # 请求间隔最小秒数
+  max_delay: 5  # 请求间隔最大秒数
