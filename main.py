@@ -19,6 +19,12 @@ logger = logging.getLogger(__name__)
 
 def setup_logging():
     """配置日志"""
+    # 确保日志目录存在
+    import os
+    log_dir = os.path.dirname(LOG_FILE)
+    if log_dir and not os.path.exists(log_dir):
+        os.makedirs(log_dir, exist_ok=True)
+
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
