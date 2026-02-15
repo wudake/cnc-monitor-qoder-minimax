@@ -168,14 +168,10 @@ def main():
                     logger.info(f"等待到 {run_time} 执行任务...")
                     time.sleep(60)
                 else:
-                    if run_monitor():
-                        # 任务成功后，等待一天
-                        logger.info("任务执行成功，等待下一次执行...")
-                        time.sleep(86400)  # 24小时
-                    else:
-                        # 任务失败后重试
-                        logger.info("任务执行失败，10分钟后重试...")
-                        time.sleep(600)
+                    # 无论成功失败都等待一天后重试
+                    run_monitor()
+                    logger.info("任务执行完成，等待下一次执行...")
+                    time.sleep(86400)  # 24小时
 
 
 if __name__ == "__main__":
