@@ -5,8 +5,12 @@ import os
 import yaml
 from pathlib import Path
 
-# 项目根目录
-PROJECT_ROOT = Path(__file__).parent
+# 项目根目录（支持 GitHub Actions 的嵌套目录）
+PROJECT_ROOT = Path(__file__).parent.resolve()
+# 如果在 GitHub Actions 中，尝试向上查找项目根目录
+if not (PROJECT_ROOT / "config.yaml").exists():
+    PROJECT_ROOT = Path(__file__).parent.parent.resolve()
+
 CONFIG_FILE = PROJECT_ROOT / "config.yaml"
 DATA_FILE = PROJECT_ROOT / "data" / "data.json"
 LOG_FILE = PROJECT_ROOT / "logs" / "monitor.log"
