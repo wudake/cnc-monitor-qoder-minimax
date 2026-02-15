@@ -19,17 +19,19 @@ logger = logging.getLogger(__name__)
 
 def setup_logging():
     """配置日志"""
-    # 确保日志目录存在
+    # 确保日志目录存在 - 使用相对于 cwd 的路径
     import os
-    log_dir = os.path.dirname(LOG_FILE)
-    if log_dir and not os.path.exists(log_dir):
+    log_dir = "logs"
+    if not os.path.exists(log_dir):
         os.makedirs(log_dir, exist_ok=True)
+
+    log_file = os.path.join(log_dir, "monitor.log")
 
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
         handlers=[
-            logging.FileHandler(LOG_FILE, encoding="utf-8"),
+            logging.FileHandler(log_file, encoding="utf-8"),
             logging.StreamHandler(sys.stdout)
         ]
     )
