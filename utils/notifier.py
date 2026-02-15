@@ -215,6 +215,84 @@ class Notifier:
         """通知错误"""
         self.telegram.send_error_alert(site_name, error_msg)
 
+    def send_summary(self, all_articles: List[Dict], all_errors: List[Dict]) -> None:
+        """发送汇总通知"""
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
+
+        # Telegram 汇总消息
+        if self.telegram.is_configured():
+            message = f"📊 <b>【竞品监控日报】</b>\n\n"
+            message += f"<b>检测时间</b>：{timestamp}\n\n"
+
+            if all_articles:
+                message += f"📢 <b>发现 {len(all_articles)} 篇新文章：</b>\n"
+                for article in all_articles:
+                    title = article.get('title', '')[:50]
+                    url = article.get('url', '')
+                    message += f"• {title}\n{url}\n\n"
+            else:
+                message += "✅ 无新增文章\n\n"
+
+            if all_errors:
+                message += f"⚠️ <b>{len(all_errors)} 个站点异常：</b>\n"
+                for err in all_errors:
+                    message += f"• {err['site']}: {err['error'][:50]}\n"
+
+            self.telegram.send_message(message)
+
+        # Email 汇总（有文章或错误时发送）
+        if self.email.is_configured() and (all_articles or all_errors):
+            subject = f"【竞品监控】日报 - {timestamp}"
+            if all_articles:
+                subject = f"【竞品监控】发现 {len(all_articles)} 篇新文章 - {timestamp}"
+            html = self._create_summary_html(all_articles, all_errors, timestamp)
+            self.email.send_email(subject, html)
+
+    def _create_summary_html(self, all_articles: List[Dict], all_errors: List[Dict], timestamp: str) -> str:
+        """创建汇总HTML内容"""
+        rows = ""
+        for article in all_articles:
+            rows += f"""
+            <tr>
+                <td>{article.get('title', '')}</td>
+                <td><a href="{article.get('url', '')}">链接</a></td>
+            </tr>
+            """
+
+        error_rows = ""
+        for err in all_errors:
+            error_rows += f"""
+            <tr>
+                <td>{err['site']}</td>
+                <td>{err['error']}</td>
+            </tr>
+            """
+
+        html = f"""
+        <html>
+        <head>
+            <meta charset="utf-8">
+            <style>
+                table {{ border-collapse: collapse; width: 100%; margin-bottom: 20px; }}
+                th, td {{ border: 1px solid #ddd; padding: 8px; text-align: left; }}
+                th {{ background-color: #4CAF50; color: white; }}
+                tr:nth-child(even) {{ background-color: #f2f2f2; }}
+                .error {{ background-color: #ffcccc; }}
+            </style>
+        </head>
+        <body>
+            <h2>📊 竞品监控日报</h2>
+            <p><b>检测时间</b>：{timestamp}</p>
+
+            <h3>📢 新文章 ({len(all_articles)})</h3>
+            {f'<table><tr><th>标题</th><th>链接</th></tr>{rows}</table>' if all_articles else '<p>✅ 无新增文章</p>'}
+
+            {f'<h3>⚠️ 异常站点 ({len(all_errors)})</h3><table><tr><th>站点</th><th>错误</th></tr>{error_rows}</table>' if all_errors else ''}
+        </body>
+        </html>
+        """
+        return html
+
 
 # 全局通知器实例
 notifier = Notifier()

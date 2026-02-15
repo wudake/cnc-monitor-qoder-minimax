@@ -43,8 +43,8 @@ def check_keywords(title: str) -> bool:
     return any(keyword in title_upper for keyword in config.keywords)
 
 
-def process_site(target: dict, retry_count: int = 0) -> bool:
-    """处理单个站点"""
+def process_site(target: dict, retry_count: int = 0):
+    """处理单个站点，返回 (result, new_articles, error_msg)"""
     site_key = target["key"]
     site_name = target["name"]
     url = target["url"]
@@ -52,15 +52,18 @@ def process_site(target: dict, retry_count: int = 0) -> bool:
 
     logger.info(f"正在监控: {site_name} ({url})")
 
+    matched_articles = []
+    error_msg = None
+
     try:
         # 获取当前Top 3文章
         articles = site_monitor.fetch_articles(site_key, url, use_google)
 
         if not articles:
-            # 解析失败，发送报警
+            # 解析失败
             logger.warning(f"站点 {site_name} 解析结果为空")
-            notifier.notify_error(site_name, "解析结果为空，可能网站结构已更改")
-            return False
+            error_msg = "解析结果为空，可能网站结构已更改"
+            return False, [], error_msg
 
         logger.info(f"站点 {site_name} 获取到 {len(articles)} 篇文章")
 
@@ -75,13 +78,12 @@ def process_site(target: dict, retry_count: int = 0) -> bool:
 
             if matched_articles:
                 logger.info(f"站点 {site_name} 发现 {len(matched_articles)} 篇包含关键词的新文章")
-                notifier.notify_new_articles(site_name, matched_articles)
             else:
                 logger.info(f"站点 {site_name} 有新增文章但不包含关键词，跳过通知")
 
         # 无论是否有新文章，都更新快照
         storage.update_snapshot(site_key, articles)
-        return True
+        return True, matched_articles, None
 
     except Exception as e:
         logger.error(f"处理站点 {site_name} 时出错: {e}")
@@ -92,8 +94,8 @@ def process_site(target: dict, retry_count: int = 0) -> bool:
             time.sleep(config.retry_delay)
             return process_site(target, retry_count + 1)
         else:
-            notifier.notify_error(site_name, f"重试{config.retry_count}次后仍失败: {str(e)}")
-            return False
+            error_msg = f"重试{config.retry_count}次后仍失败: {str(e)}"
+            return False, [], error_msg
 
 
 def run_monitor():
@@ -105,12 +107,25 @@ def run_monitor():
     success_count = 0
     fail_count = 0
 
+    # 收集所有通知
+    all_new_articles = []
+    all_errors = []
+
     for target in TARGETS:
-        result = process_site(target)
+        result, new_articles, error_msg = process_site(target)
         if result:
             success_count += 1
         else:
             fail_count += 1
+
+        if new_articles:
+            all_new_articles.extend(new_articles)
+        if error_msg:
+            all_errors.append({"site": target["name"], "error": error_msg})
+
+    # 汇总发送通知
+    if all_new_articles or all_errors:
+        notifier.send_summary(all_new_articles, all_errors)
 
     logger.info("=" * 60)
     logger.info(f"监控任务完成 - 成功: {success_count}, 失败: {fail_count}")
