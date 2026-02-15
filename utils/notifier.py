@@ -37,18 +37,24 @@ class TelegramNotifier:
 
         try:
             # python-telegram-bot 20.x 使用异步API
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-            try:
-                loop.run_until_complete(
-                    self.bot.send_message(
-                        chat_id=self.chat_id,
-                        text=text,
-                        parse_mode="HTML"
+            import concurrent.futures
+            def _send():
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                try:
+                    return loop.run_until_complete(
+                        self.bot.send_message(
+                            chat_id=self.chat_id,
+                            text=text,
+                            parse_mode="HTML"
+                        )
                     )
-                )
-            finally:
-                loop.close()
+                finally:
+                    loop.close()
+
+            with concurrent.futures.ThreadPoolExecutor() as executor:
+                future = executor.submit(_send)
+                future.result()
 
             logger.info(f"Telegram消息发送成功")
             return True

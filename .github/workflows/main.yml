@@ -22,7 +22,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install -r requirements.txt
+          pip install -r requirements.txt selenium webdriver-manager
           # 安装 Chrome 和 Selenium
           sudo apt-get update
           sudo apt-get install -y chromium-browser
